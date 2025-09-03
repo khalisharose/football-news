@@ -8,5 +8,6 @@ def show_main(request):
     }
 
     return render(request, "main.html", context)
+#halo
 
 # Create your views here.
