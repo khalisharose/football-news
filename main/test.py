@@ -1,63 +1,73 @@
-from django.test import TestCase, Client
-from .models import News
+from django.test import TestCase
+from .models import Item
 
-class MainTest(TestCase):
+class ItemTest(TestCase):
     def test_main_url_is_exist(self):
-        response = Client().get('')
+        response = self.client.get('')
         self.assertEqual(response.status_code, 200)
 
     def test_main_using_main_template(self):
-        response = Client().get('')
+        response = self.client.get('')
         self.assertTemplateUsed(response, 'main.html')
 
     def test_nonexistent_page(self):
-        response = Client().get('/burhan_always_exists/')
+        response = self.client.get('/nonexistent_page/')
         self.assertEqual(response.status_code, 404)
 
-    def test_news_creation(self):
-        news = News.objects.create(
-          title="BURHAN FC MENANG",
-          content="BURHAN FC 1-0 PANDA BC",
-          category="match",
-          news_views=1001,
-          is_featured=True
+    def test_item_creation(self):
+        item = Item.objects.create(
+            name="Official Merch T-Shirt",
+            price=1500000,
+            description="High-quality official merch",
+            category="clothing",
+            stock=50,
+            rating=4.5,
+            is_featured=True,
+            is_official_merch=True
         )
-        self.assertTrue(news.is_news_hot)
-        self.assertEqual(news.category, "match")
-        self.assertTrue(news.is_featured)
-        
-    def test_news_default_values(self):
-        news = News.objects.create(
-          title="Test News",
-          content="Test content"
+        self.assertEqual(item.name, "Official Merch T-Shirt")
+        self.assertEqual(item.category, "clothing")
+        self.assertTrue(item.is_featured)
+        self.assertTrue(item.is_official_merch)
+
+    def test_item_default_values(self):
+        item = Item.objects.create(
+            name="Default Product",
+            price=1000000,
+            description="Default product description"
         )
-        self.assertEqual(news.category, "update")
-        self.assertEqual(news.news_views, 0)
-        self.assertFalse(news.is_featured)
-        self.assertFalse(news.is_news_hot)
-        
-    def test_increment_views(self):
-        news = News.objects.create(
-          title="Test News",
-          content="Test content"
+        self.assertEqual(item.category, "electronics")
+        self.assertEqual(item.stock, 0)
+        self.assertEqual(item.rating, 0.0)
+        self.assertFalse(item.is_featured)
+        self.assertFalse(item.is_official_merch)
+        self.assertTrue(item.is_high_demand)
+
+    def test_increment_stock(self):
+        item = Item.objects.create(
+            name="Test Product",
+            price=500000,
+            description="Test product"
         )
-        initial_views = news.news_views
-        news.increment_views()
-        self.assertEqual(news.news_views, initial_views + 1)
-        
-    def test_is_news_hot_threshold(self):
-        # Test news with exactly 20 views (should not be hot)
-        news_20 = News.objects.create(
-          title="News with 20 views",
-          content="Test content",
-          news_views=20
+        initial_stock = item.stock
+        item.increment_stock()
+        self.assertEqual(item.stock, initial_stock + 1)
+
+    def test_is_high_demand_threshold(self):
+        # Test item with stock >= 10 (not high demand)
+        item_not_high = Item.objects.create(
+            name="Low Demand Product",
+            price=700000,
+            description="Low demand product",
+            stock=15
         )
-        self.assertFalse(news_20.is_news_hot)
-        
-        # Test news with 21 views (should be hot)
-        news_21 = News.objects.create(
-          title="News with 21 views", 
-          content="Test content",
-          news_views=21
+        self.assertFalse(item_not_high.is_high_demand)
+
+        # Test item with stock < 10 (high demand)
+        item_high = Item.objects.create(
+            name="High Demand Product",
+            price=750000,
+            description="High demand product",
+            stock=5
         )
-        self.assertTrue(news_21.is_news_hot)
+        self.assertTrue(item_high.is_high_demand)
